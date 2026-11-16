@@ -1,0 +1,17 @@
+[project]
+name = "cs231-material-classification"
+version = "0.1.0"
+description = "Chuẩn bị dữ liệu MINC-2500 cho đồ án CS231.R11"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pandas",
+    "matplotlib",
+    "pillow",
+    "ipykernel",
+    "nbclient",
+    "nbformat",
+    "scikit-learn>=1.9.1",
+]
+
+[tool.uv]
+package = false
