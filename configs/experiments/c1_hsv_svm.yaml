@@ -1,8 +1,22 @@
+# C1 — HSV histogram (32 chiều) + Linear SVM. Dùng làm mẫu cho các cấu hình khác.
+# Tham số dùng chung (dataset, tham số trích xuất đặc trưng) nằm trong configs/default.yaml.
+
 experiment:
   name: c1_hsv_svm
-  description: HSV histogram (32 chiều) + Linear SVM
+  description: HSV histogram (32 chiều), chuẩn hóa L2 theo từng mẫu, Linear SVM
+  seed: 42
+
 representation:
   hsv: true
   hog_scales: [] # Không dùng HOG
+
 classifier:
-  name: linear_svm
+  type: linear_svm
+  C_grid: [0.01, 0.1, 1.0, 10.0]
+  penalty: l2
+  loss: squared_hinge
+  max_iter: 5000
+  tol: 0.0001
+
+evaluation:
+  selection_metric: macro_f1 # chọn C trên validation; fit trên train, không gộp validation
