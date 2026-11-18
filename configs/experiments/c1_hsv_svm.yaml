@@ -1,0 +1,8 @@
+experiment:
+  name: c1_hsv_svm
+  description: HSV histogram (32 chiều) + Linear SVM
+representation:
+  hsv: true
+  hog_scales: [] # Không dùng HOG
+classifier:
+  name: linear_svm

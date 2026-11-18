@@ -1,17 +1,38 @@
 [project]
-name = "cs231-material-classification"
+name = "minc-material-classification"
 version = "0.1.0"
-description = "Chuẩn bị dữ liệu MINC-2500 cho đồ án CS231.R11"
+description = "Chuẩn bị dữ liệu MINC-2500 (Split 1) cho đồ án CS231: tải, kiểm tra và trích xuất cache"
+readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "pandas",
-    "matplotlib",
-    "pillow",
-    "ipykernel",
-    "nbclient",
-    "nbformat",
-    "scikit-learn>=1.9.1",
+    "numpy>=1.26",
+    "opencv-python>=4.9",
+    "datasets>=2.19",
+    "pillow>=10.0",
+    "python-dotenv>=1.0",
+    "PyYAML>=6.0",
 ]
 
-[tool.uv]
-package = false
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/material_classification"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]

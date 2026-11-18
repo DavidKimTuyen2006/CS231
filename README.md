@@ -1,64 +1,176 @@
-# CS231 — Phân loại chất liệu bề mặt
+# CS231 — Chuẩn bị dữ liệu MINC-2500 (Split 1)
 
-Template làm việc nhóm trên MINC-2500. Mỗi thành viên tự viết phần trích xuất đặc trưng và huấn luyện; cùng dùng Split 1 và cách đánh giá trong notebook.
+Phần dữ liệu của đồ án: tải dataset từ Hugging Face một lần, kiểm tra, rồi trích xuất feature cache để các thành viên khác dùng lại.
 
-## Bắt đầu
+Repo dùng **uv** để quản lý Python và thư viện. Dataset và cache lưu cục bộ, không đưa lên GitHub.
 
-Cần cài uv và một trình mở notebook, ví dụ VS Code với extension Jupyter.
+---
 
-Trong thư mục dự án, tạo môi trường Python và cài thư viện:
+## 1. Yêu cầu
+
+- Git
+- [uv](https://docs.astral.sh/uv/) (uv tự tải Python 3.12 nếu máy chưa có)
+- Khoảng **10 GB** trống cho dataset và cache
+- Internet cho lần tải đầu tiên
+
+Cài uv:
+
+```powershell
+# Windows PowerShell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
 ```bash
+# Linux / macOS / WSL
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Đóng và mở lại terminal, rồi kiểm tra: `uv --version`.
+
+---
+
+## 2. Cài môi trường (mỗi máy làm một lần)
+
+```bash
+git clone <repository-url> minc-material-classification
+cd minc-material-classification
 uv sync --locked
 ```
 
-Tải và giải nén dataset từ nguồn chính thức (các lệnh dưới dùng cho Linux/macOS/WSL):
+- `uv sync --locked` cài đúng phiên bản trong `uv.lock`.
+- Không cần kích hoạt `.venv`: mọi lệnh chạy qua `uv run ...`.
+
+Tạo file cấu hình riêng của máy:
 
 ```bash
-mkdir -p data
-curl -fL --retry 3 -C - -o data/minc-2500.tar.gz https://opensurfaces-minc.s3.amazonaws.com/minc-2500.tar.gz
-tar -xzf data/minc-2500.tar.gz -C data
+# Linux / macOS / WSL
+cp .env.example .env
 ```
 
-Cấu trúc dữ liệu cần có:
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+Sửa `.env` nếu muốn đặt dataset và cache ở ổ khác:
+
+```dotenv
+DATASET_ROOT=D:/datasets/minc-2500
+CACHE_ROOT=D:/cs231-cache
+```
+
+Đường dẫn tương đối tính từ thư mục gốc repo. Không ghi đường dẫn riêng vào YAML hay mã nguồn.
+
+---
+
+## 3. Tải và kiểm tra dataset (mỗi máy làm một lần)
+
+Nguồn: [`mcimpoi/minc-2500_split_1`](https://huggingface.co/datasets/mcimpoi/minc-2500_split_1). Revision (commit SHA) được ghim trong `configs/default.yaml`, mọi người dùng cùng một bản.
+
+```bash
+uv run python scripts/download_dataset.py
+uv run python scripts/prepare_data.py
+```
+
+- `download_dataset.py` tải dataset và lưu bản Arrow bằng `save_to_disk()` tại `DATASET_ROOT`.
+- `prepare_data.py` kiểm tra số mẫu (48.875 / 2.875 / 5.750), 23 lớp và thứ tự nhãn, rồi ghi `manifest.json`.
+- Tải lại khi đã có dataset: `uv run python scripts/download_dataset.py --force`.
+- Có sẵn bản Arrow từ máy khác: chép vào `DATASET_ROOT`, rồi chạy `prepare_data.py` để xác thực.
+
+---
+
+## 4. Trích xuất feature cache
+
+```bash
+uv run python scripts/extract_features.py
+```
+
+- Cache ghi vào `CACHE_ROOT/minc2500_split1/<signature>/`, theo từng split, dạng `.npy`.
+- Chữ ký cache băm revision dataset, danh sách nhãn và cấu hình `features:` trong `configs/default.yaml`. Đổi bất kỳ mục nào trong đó thì phải trích xuất lại.
+- Chạy lại khi cache đã hợp lệ sẽ tái sử dụng, không tính lại.
+- Ép trích xuất lại: `uv run python scripts/extract_features.py --force`.
+
+**Phụ thuộc nhóm đặc trưng:** script gọi `extract_base_vectors(rgb, features_cfg)` từ `material_classification.features.extractor`. Module này do nhóm đặc trưng viết. Nếu chưa có, script dừng và báo rõ.
+
+Hàm trích xuất nhận ảnh RGB `uint8` và trả về dict `{tên_vector: mảng 1 chiều}`. Mỗi vector được ghi thành `<tên_vector>.npy`.
+
+---
+
+## 5. Cấu trúc repository
 
 ```text
-data/minc-2500/
-├── categories.txt
-├── images/
-└── labels/
-    ├── train1.txt
-    ├── validate1.txt
-    └── test1.txt
+minc-material-classification/
+├── configs/
+│   ├── default.yaml            # dataset (revision ghim, nhãn, số mẫu), tham số đặc trưng cho chữ ký cache
+│   └── experiments/
+│       └── c1_hsv_svm.yaml     # config cho c1
+├── src/material_classification/
+│   ├── data/
+│   │   ├── dataset.py          # đọc dataset cục bộ, kiểm tra schema, giải mã ảnh
+│   │   ├── transforms.py       # resize trực tiếp từ RGB, chuyển HSV và xám
+│   │   └── cache.py            # ghi, đọc và xác thực feature cache
+│   ├── features/__init__.py    # thuộc nhóm đặc trưng
+│   ├── models/__init__.py      # thuộc nhóm mô hình
+│   ├── evaluation/__init__.py  # thuộc nhóm đánh giá
+│   └── utils.py                # đường dẫn .env, đọc YAML, băm, ghi JSON, thông tin tái lập
+├── scripts/
+│   ├── download_dataset.py
+│   ├── prepare_data.py
+│   └── extract_features.py
+├── tests/test_dataset.py       # test schema, cache và luồng build cache (không cần MINC-2500)
+├── notebooks/experiment_template.ipynb   # template cũ của lớp, không thuộc phần dữ liệu
+├── docs/dataset.md             # nguồn, schema, revision, split
+├── .github/workflows/tests.yml # CI: uv sync --locked, ruff, pytest
+├── .env.example
+├── pyproject.toml, uv.lock, .python-version
+├── CONTRIBUTING.md
+└── README.md
 ```
 
-Dataset tải về khoảng 2,1 GB; giải nén khoảng 2,5 GB. Dữ liệu và môi trường `.venv` không đưa lên Git. Mỗi người tải dataset trên máy của mình.
+---
 
-## Làm thí nghiệm
+## 6. Quản lý thư viện với uv
 
-1. Sao chép `experiment_template.ipynb` thành `experiment_<ten>_<phuong_phap>.ipynb`, đặt ngay trong thư mục dự án.
-2. Chọn kernel `.venv/bin/python`, chạy notebook từ thư mục dự án.
-3. Chạy phần đọc dữ liệu; tự viết phần đặc trưng và huấn luyện.
-4. Đánh giá validation để chọn cấu hình; chỉ đánh giá test khi đã chốt phương pháp.
-5. Ghi tham số, kết quả và nhận xét ở cuối notebook.
+Thư viện khai báo trong `pyproject.toml`, phiên bản khóa trong `uv.lock`. **Commit cả hai file.**
 
-Toàn bộ code cần thiết nằm trong notebook. Sửa `DATA_DIR` nếu dữ liệu nằm ở chỗ khác. Khi đổi phương pháp, dùng **Restart Kernel → Run All** để tránh dùng biến cũ. Trước khi commit notebook, dùng **Clear All Outputs** rồi lưu để repo gọn và dễ xem thay đổi.
+```bash
+uv add <package>                      # thêm thư viện (cập nhật pyproject.toml và uv.lock)
+uv add --dev <package>                # thêm công cụ phát triển
+uv remove <package>                   # gỡ thư viện
+uv lock --upgrade-package <package>   # nâng một thư viện trong lock
+uv sync --locked                      # cài đúng theo uv.lock
+```
 
-## Quy ước đánh giá chung
+Nếu sửa `pyproject.toml` bằng tay, chạy `uv lock`. CI dùng `uv sync --locked` và báo lỗi nếu `uv.lock` không khớp.
 
-| Tập | Số ảnh | Vai trò |
-|---|---:|---|
-| Train | 48.875 | Học đặc trưng/tiền xử lý có tham số và mô hình |
-| Validation | 2.875 | Chọn cấu hình bằng Macro-F1 |
-| Test | 5.750 | So sánh cuối cùng giữa các phương pháp đã chốt |
+---
 
-- Giữ nguyên thứ tự 23 nhãn trong `categories.txt` và các danh sách Split 1.
-- Dự đoán phải khớp thứ tự ảnh. Scaler/PCA chỉ fit trên train; áp dụng lại cho validation và test.
-- Báo cáo Accuracy, Macro-F1, Precision/Recall/F1 từng lớp và confusion matrix. Điểm ở thang 0..1; chia cho 0 tính điểm 0.
-- Không chỉnh tham số dựa trên điểm test. Template huấn luyện trên train, chưa gộp train và validation.
+## 7. Kiểm thử và chất lượng mã
 
-## Nguồn dữ liệu
+```bash
+uv run pytest
+uv run ruff check .
+uv run ruff format .
+```
 
-[MINC-2500 — Cornell OpenSurfaces](https://opensurfaces.cs.cornell.edu/publications/minc/): 57.500 ảnh thuộc 23 lớp. Nhãn được cấp phép CC BY 4.0; ảnh có giấy phép riêng, xem nguồn chính thức.
+Test dùng dữ liệu tổng hợp, không cần tải MINC-2500.
 
-Sean Bell, Paul Upchurch, Noah Snavely và Kavita Bala. *Material Recognition in the Wild with the Materials in Context Database*. CVPR 2015.
+---
+
+## 8. Xử lý sự cố
+
+| Triệu chứng | Cách xử lý |
+|---|---|
+| `Chưa có dataset cục bộ` | Chạy `download_dataset.py`, hoặc kiểm tra `DATASET_ROOT` trong `.env` |
+| `Thứ tự nhãn ... khác configs/default.yaml` | Dataset không đúng bản; kiểm tra revision |
+| `Chưa có material_classification.features.extractor` | Chờ nhóm đặc trưng đẩy module lên, rồi `git pull` |
+| `Cache ... không khớp cấu hình` | Chạy `extract_features.py --force` |
+| `UnicodeEncodeError` khi in tiếng Việt (Windows) | Script đã tự đặt UTF-8; nếu vẫn gặp, chạy `$env:PYTHONUTF8=1` trong PowerShell |
+| `uv.lock needs to be updated` trong CI | Chạy `uv lock` cục bộ rồi commit `uv.lock` |
+
+---
+
+## 9. Dữ liệu và trích dẫn
+
+- MINC-2500: [Cornell OpenSurfaces](https://opensurfaces.cs.cornell.edu/publications/minc/). Nhãn CC BY 4.0; ảnh có giấy phép riêng. Chi tiết trong `docs/dataset.md`.
+- Sean Bell, Paul Upchurch, Noah Snavely và Kavita Bala. *Material Recognition in the Wild with the Materials in Context Database*. CVPR 2015.

@@ -1,0 +1,28 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Cài môi trường theo uv.lock
+        run: uv sync --locked
+
+      - name: Kiểm tra định dạng và lỗi lint
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+
+      - name: Chạy test (không cần MINC-2500)
+        run: uv run pytest

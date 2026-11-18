@@ -1,26 +1,43 @@
-data/
-.venv/
-__pycache__/
-*.py[cod]
-.ipynb_checkpoints/
-.pytest_cache/
-.ruff_cache/
-
-# Dữ liệu, đặc trưng, mô hình và kết quả tạo khi chạy
-results/
-outputs/
-models/
+# Local datasets, cache and artifacts (không đưa lên GitHub)
+/data/
+/datasets/
+/cache/
+/outputs/
+/checkpoints/
+*.arrow
+*.parquet
 *.npy
 *.npz
+*.memmap
 *.pkl
 *.joblib
 *.pt
 *.pth
+*.keras
+*.h5
 *.onnx
+
+# Kết quả chạy thô; chỉ commit results/ đã rà soát (bảng nhỏ, config đã chạy)
+/outputs/
 
 # Cấu hình riêng của từng máy
 .env
-.env.*
+.env.local
 !.env.example
+
+# Python, uv và công cụ
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Hệ điều hành
 .DS_Store
 Thumbs.db
