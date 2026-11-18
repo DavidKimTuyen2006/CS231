@@ -1,0 +1,51 @@
+# Cấu hình dữ liệu dùng chung. Đường dẫn riêng của từng máy nằm trong .env, không nằm ở đây.
+
+dataset:
+  id: mcimpoi/minc-2500_split_1
+  # Commit SHA của dataset trên Hugging Face, lấy từ HF Hub API ngày 2026-11-18.
+  # Mọi thành viên dùng đúng SHA này; đổi SHA = đổi dữ liệu = phải trích xuất lại cache.
+  revision: 5ac92ad1af8ef34f9ecd8d54d60a73c0289fe0c3
+  split_names: [train, validation, test]
+  image_column: image
+  label_column: label
+  # Thứ tự nhãn cố định (ClassLabel của nguồn). Nhãn số 0..22 theo đúng thứ tự này.
+  class_names:
+    - brick
+    - carpet
+    - ceramic
+    - fabric
+    - foliage
+    - food
+    - glass
+    - hair
+    - leather
+    - metal
+    - mirror
+    - other
+    - painted
+    - paper
+    - plastic
+    - polishedstone
+    - skin
+    - sky
+    - stone
+    - tile
+    - wallpaper
+    - water
+    - wood
+  expected_counts:
+    train: 48875
+    validation: 2875
+    test: 5750
+
+# Tham số trích xuất đặc trưng. Chỉ dùng để tính chữ ký cache; giá trị do nhóm đặc trưng quyết định.
+features:
+  hsv:
+    image_size: 128
+    bins: [16, 8, 8]
+  hog:
+    scales: [64, 128]
+    orientations: 9
+    pixels_per_cell: [8, 8]
+    cells_per_block: [2, 2]
+    block_norm: L2-Hys
