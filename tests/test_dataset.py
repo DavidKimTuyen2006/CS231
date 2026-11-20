@@ -2,6 +2,7 @@ import copy
 import json
 
 import numpy as np
+import pyarrow as pa
 import pytest
 from datasets import ClassLabel, Dataset, DatasetDict, Features
 from datasets import Image as HFImage
@@ -42,6 +43,69 @@ def _fake_extract(rgb, features_cfg):
 def test_missing_dataset_gives_clear_error(tmp_path):
     with pytest.raises(FileNotFoundError, match="download_dataset"):
         load_minc_dataset(tmp_path / "absent")
+
+
+def test_load_saved_dataset(tmp_path):
+    cfg = _cfg()
+    original = _toy_dataset(cfg["dataset"]["class_names"])
+    original.save_to_disk(str(tmp_path))
+    loaded = load_minc_dataset(tmp_path)
+    check_dataset_schema(loaded, cfg)
+    assert loaded["train"]["label"][:] == original["train"]["label"][:]
+
+
+def _write_arrow_cache(root):
+    cfg = _cfg()
+    cache = root / "default" / "0.0.0" / cfg["dataset"]["revision"]
+    cache.mkdir(parents=True)
+    ds = _toy_dataset(cfg["dataset"]["class_names"])
+    splits = {}
+    for name, data in ds.items():
+        # Train có hai shard để kiểm tra thứ tự nối; các split còn lại chỉ có một.
+        parts = [data.select([0]), data.select([1, 2])] if name == "train" else [data]
+        for i, part in enumerate(parts):
+            suffix = f"-{i:05d}-of-{len(parts):05d}" if len(parts) > 1 else ""
+            path = cache / f"minc-2500_split_1-{name}{suffix}.arrow"
+            table = part.data.table
+            with pa.OSFile(str(path), "wb") as sink:
+                with pa.ipc.new_stream(sink, table.schema) as writer:
+                    writer.write_table(table)
+        splits[name] = {"num_examples": len(data)}
+        if len(parts) > 1:
+            splits[name]["shard_lengths"] = [len(part) for part in parts]
+    (cache / "dataset_info.json").write_text(
+        json.dumps({"dataset_name": "minc-2500_split_1", "splits": splits}), encoding="utf-8"
+    )
+    return cache
+
+
+@pytest.mark.parametrize("direct", [False, True])
+def test_load_arrow_cache_preserves_schema_and_shard_order(tmp_path, direct):
+    cache = _write_arrow_cache(tmp_path)
+    loaded = load_minc_dataset(cache if direct else tmp_path)
+    check_dataset_schema(loaded, _cfg())
+    assert {name: len(data) for name, data in loaded.items()} == dict.fromkeys(
+        ["train", "validation", "test"], 3
+    )
+    assert loaded["train"]["label"][:] == [0, 1, 2]
+    assert loaded["train"][2]["image"].getpixel((0, 0)) == (20, 0, 0)
+
+
+def test_arrow_cache_rejects_missing_shard(tmp_path):
+    cache = _write_arrow_cache(tmp_path)
+    (cache / "minc-2500_split_1-train-00001-of-00002.arrow").unlink()
+    with pytest.raises(FileNotFoundError, match="thiếu"):
+        load_minc_dataset(tmp_path)
+
+
+def test_arrow_cache_rejects_wrong_row_count(tmp_path):
+    cache = _write_arrow_cache(tmp_path)
+    path = cache / "dataset_info.json"
+    info = json.loads(path.read_text(encoding="utf-8"))
+    info["splits"]["train"]["num_examples"] = 4
+    path.write_text(json.dumps(info), encoding="utf-8")
+    with pytest.raises(ValueError, match="số mẫu"):
+        load_minc_dataset(tmp_path)
 
 
 def test_schema_accepts_matching_dataset():

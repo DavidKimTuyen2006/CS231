@@ -76,6 +76,8 @@ uv run python scripts/prepare_data.py
 - `prepare_data.py` kiểm tra số mẫu (48.875 / 2.875 / 5.750), 23 lớp và thứ tự nhãn, rồi ghi `manifest.json`.
 - Tải lại khi đã có dataset: `uv run python scripts/download_dataset.py --force`.
 - Có sẵn bản Arrow từ máy khác: chép vào `DATASET_ROOT`, rồi chạy `prepare_data.py` để xác thực.
+- Có sẵn cache Hugging Face: có thể đặt `DATASET_ROOT=D:/huggingface/datasets/mcimpoi___minc-2500_split_1`. Hàm đọc sẽ tìm cache của revision đã ghim và đọc trực tiếp các shard Arrow, không cần tải lại. Cũng có thể trỏ thẳng tới thư mục chứa `dataset_info.json`.
+- Với `notebooks/c1_hsv_svm.ipynb`, cell đầu nạp lại `.env` và cell đọc dataset in đường dẫn đang dùng. Sau khi cập nhật mã nguồn, chọn **Restart Kernel** rồi chạy lại hai cell đầu để kiểm tra dữ liệu.
 
 ---
 
