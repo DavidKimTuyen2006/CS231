@@ -1,0 +1,21 @@
+# C2 — HOG-128 (8.100 chiều) + Linear SVM.
+
+experiment:
+  name: c2_hog_svm
+  description: HOG-128 (8.100 chiều), chuẩn hóa L2 theo từng mẫu, Linear SVM
+  seed: 42
+
+representation:
+  hsv: false
+  hog_scales: [128]
+
+classifier:
+  type: linear_svm
+  C_grid: [0.01, 0.1, 1.0, 10.0]
+  penalty: l2
+  loss: squared_hinge
+  max_iter: 5000
+  tol: 0.0001
+
+evaluation:
+  selection_metric: macro_f1
