@@ -11,6 +11,7 @@ Cấu trúc:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from collections.abc import Callable, Mapping
@@ -39,6 +40,26 @@ RESIZE_METHOD = "cv2.INTER_AREA"
 ExtractFn = Callable[[np.ndarray, dict[str, Any]], Mapping[str, np.ndarray]]
 
 
+# Các file mã nguồn quyết định giá trị đặc trưng.
+# Đổi nội dung file nào thì cache phải trích xuất lại.
+_FEATURE_CODE_FILES = (
+    "data/transforms.py",
+    "features/extractor.py",
+    "features/hog.py",
+    "features/hsv.py",
+)
+
+
+def feature_code_sha() -> str:
+    """Băm nội dung mã nguồn đặc trưng; cùng config nhưng khác thuật toán vẫn ra chữ ký khác."""
+    package_dir = Path(__file__).resolve().parents[1]
+    digest = hashlib.sha256()
+    for rel in _FEATURE_CODE_FILES:
+        digest.update(rel.encode("utf-8"))
+        digest.update((package_dir / rel).read_bytes())
+    return digest.hexdigest()
+
+
 def cache_signature(cfg: dict[str, Any]) -> str:
     """Băm mọi thứ ảnh hưởng đến giá trị đặc trưng đã trích xuất."""
     payload = {
@@ -47,6 +68,7 @@ def cache_signature(cfg: dict[str, Any]) -> str:
         "class_names": cfg["dataset"]["class_names"],
         "features": cfg["features"],
         "resize": RESIZE_METHOD,
+        "code": feature_code_sha(),
     }
     return sha256_json(payload)[:16]
 

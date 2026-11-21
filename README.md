@@ -111,16 +111,16 @@ minc-material-classification/
 │   │   ├── dataset.py          # đọc dataset cục bộ, kiểm tra schema, giải mã ảnh
 │   │   ├── transforms.py       # resize trực tiếp từ RGB, chuyển HSV và xám
 │   │   └── cache.py            # ghi, đọc và xác thực feature cache
-│   ├── features/__init__.py    # thuộc nhóm đặc trưng
-│   ├── models/__init__.py      # thuộc nhóm mô hình
-│   ├── evaluation/__init__.py  # thuộc nhóm đánh giá
+│   ├── features/               # hsv.py, hog.py, extractor.py, fusion.py, normalization.py
+│   ├── models/                 # svm.py, knn.py
+│   ├── evaluation/             # metrics.py, visualization.py (nhóm đánh giá)
 │   └── utils.py                # đường dẫn .env, đọc YAML, băm, ghi JSON, thông tin tái lập
 ├── scripts/
 │   ├── download_dataset.py
 │   ├── prepare_data.py
 │   └── extract_features.py
-├── tests/test_dataset.py       # test schema, cache và luồng build cache (không cần MINC-2500)
-├── notebooks/experiment_template.ipynb   # template cũ của lớp, không thuộc phần dữ liệu
+├── tests/                      # test dataset/cache, đặc trưng, fusion, mô hình (không cần MINC-2500)
+├── notebooks/c1_hsv_svm.ipynb  # notebook thí nghiệm C1
 ├── docs/dataset.md             # nguồn, schema, revision, split
 ├── .github/workflows/tests.yml # CI: uv sync --locked, ruff, pytest
 ├── .env.example

@@ -131,6 +131,16 @@ def test_cache_signature_changes_with_revision_and_features():
     assert cache_signature(base) == cache_signature(copy.deepcopy(base))
 
 
+def test_cache_signature_changes_with_feature_code(monkeypatch):
+    # Cùng config nhưng thuật toán đặc trưng đổi thì cache cũ không được tái sử dụng.
+    import material_classification.data.cache as cache_mod
+
+    cfg = _cfg()
+    before = cache_signature(cfg)
+    monkeypatch.setattr(cache_mod, "feature_code_sha", lambda: "0" * 64)
+    assert cache_signature(cfg) != before
+
+
 def _write_fake_cache(out_dir, cfg, n=2, *, tamper=False):
     names = cfg["dataset"]["class_names"]
     summaries, base_keys = {}, ["hsv", "hog64", "hog128"]
