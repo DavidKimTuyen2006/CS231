@@ -577,6 +577,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "scikit-image" },
+    { name = "scikit-learn" },
 ]
 
 [package.dev-dependencies]
@@ -589,7 +590,6 @@ notebook = [
     { name = "matplotlib" },
     { name = "nbclient" },
     { name = "nbformat" },
-    { name = "scikit-learn" },
 ]
 
 [package.metadata]
@@ -601,6 +601,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "scikit-image", specifier = ">=0.26.0" },
+    { name = "scikit-learn", specifier = ">=1.9.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -613,7 +614,6 @@ notebook = [
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "nbclient", specifier = ">=0.11.0" },
     { name = "nbformat", specifier = ">=5.11.1" },
-    { name = "scikit-learn", specifier = ">=1.9.1" },
 ]
 
 [[package]]

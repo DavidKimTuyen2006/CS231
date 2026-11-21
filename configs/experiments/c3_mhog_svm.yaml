@@ -1,0 +1,21 @@
+# C3 — HOG đa tỉ lệ HOG-64 + HOG-128 (9.864 chiều) + Linear SVM.
+
+experiment:
+  name: c3_mhog_svm
+  description: HOG đa tỉ lệ HOG-64 + HOG-128 (9.864 chiều), chuẩn hóa L2 theo từng mẫu, Linear SVM
+  seed: 42
+
+representation:
+  hsv: false
+  hog_scales: [64, 128]
+
+classifier:
+  type: linear_svm
+  C_grid: [0.01, 0.1, 1.0, 10.0]
+  penalty: l2
+  loss: squared_hinge
+  max_iter: 5000
+  tol: 0.0001
+
+evaluation:
+  selection_metric: macro_f1

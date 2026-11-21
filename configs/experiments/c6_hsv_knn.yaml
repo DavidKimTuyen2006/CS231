@@ -1,0 +1,19 @@
+# C6 — HSV histogram (32 chiều) + KNN Classifier.
+
+experiment:
+  name: c6_hsv_knn
+  description: HSV histogram (32 chiều), chuẩn hóa L2 theo từng mẫu, KNN
+  seed: 42
+
+representation:
+  hsv: true
+  hog_scales: []
+
+classifier:
+  type: knn
+  k_grid: [1, 3, 5, 7, 9, 11]
+  weights: uniform
+  metric: euclidean
+
+evaluation:
+  selection_metric: macro_f1
